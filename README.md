@@ -35,7 +35,7 @@ PostgreSQL • Drizzle ORM
 
 **Backend Services**
 ```
-Supabase • Appwrite • Firebase • Convex
+ hono • Supabase • Appwrite • Firebase • Convex
 ```
 
 **Authentication**
