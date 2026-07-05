@@ -7,4 +7,7 @@ export declare const allJobs: Array<Job>;
 export type Education = GetTypeByName<typeof configuration, "education">;
 export declare const allEducations: Array<Education>;
 
+export type Post = GetTypeByName<typeof configuration, "posts">;
+export declare const allPosts: Array<Post>;
+
 export {};

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { CarouselApi } from '#/components/ui/carousel'
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from '#/components/ui/carousel'
+import { getAllPosts } from '#/lib/blog'
 
 type PortfolioData = {
   title: string
@@ -144,19 +145,48 @@ const techStack = [
   },
 ]
 
+type BlogPostPreview = {
+  slug: string
+  title: string
+  summary: string
+  publishedAt: string
+}
+
 type LandingLoaderData = {
   portfolio: PortfolioData
   socialLinks: SocialLink[]
   projects: ProjectData[]
+  blogPosts: BlogPostPreview[]
+}
+
+const SITE_URL = 'https://boyhax.com'
+
+function toAbsoluteUrl(pathOrUrl: string): string {
+  if (!pathOrUrl) {
+    return SITE_URL
+  }
+
+  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
+    return pathOrUrl
+  }
+
+  if (pathOrUrl.startsWith('/')) {
+    return `${SITE_URL}${pathOrUrl}`
+  }
+
+  return `${SITE_URL}/${pathOrUrl}`
 }
 
 const defaultLandingData: LandingLoaderData = {
   portfolio: emptyPortfolio,
   socialLinks: [],
   projects: [],
+  blogPosts: [],
 }
 
-function mapDataJson(dataJson: DataJsonContent): LandingLoaderData {
+function mapDataJson(
+  dataJson: DataJsonContent,
+): Omit<LandingLoaderData, 'blogPosts'> {
   const socialLinks = Array.isArray(dataJson.social) && dataJson.social.length
     ? dataJson.social
         .filter((item) => item.label && item.url)
@@ -236,7 +266,15 @@ async function loadLandingData(): Promise<LandingLoaderData> {
       dataJson = (await dataRes.json()) as DataJsonContent
     }
 
-    return mapDataJson(dataJson)
+    return {
+      ...mapDataJson(dataJson),
+      blogPosts: getAllPosts().map((post) => ({
+        slug: post.slug,
+        title: post.title,
+        summary: post.summary,
+        publishedAt: post.publishedAt,
+      })),
+    }
   } catch {
     return defaultLandingData
   }
@@ -244,11 +282,109 @@ async function loadLandingData(): Promise<LandingLoaderData> {
 
 export const Route = createFileRoute('/')({
   loader: loadLandingData,
+  head: ({ loaderData }) => {
+    const portfolio = loaderData?.portfolio || emptyPortfolio
+    const title = portfolio.title || 'said alhajri . boyhax portfolio'
+    const description =
+      portfolio.intro ||
+      'Full stack developer portfolio with custom web and mobile products.'
+    const imagePath =
+      portfolio.hero_image || portfolio.avatar_image || '/Assets/hero.png'
+    const imageUrl = toAbsoluteUrl(imagePath)
+    const canonicalUrl = SITE_URL
+
+    return {
+      meta: [
+        {
+          title,
+        },
+        {
+          name: 'description',
+          content: description,
+        },
+        {
+          name: 'keywords',
+          content:
+            'said alhajri,boyhax,full stack developer,react,nodejs,typescript,portfolio,oman',
+        },
+        {
+          name: 'robots',
+          content: 'index, follow, max-image-preview:large',
+        },
+        {
+          name: 'googlebot',
+          content: 'index, follow, max-image-preview:large',
+        },
+        {
+          property: 'og:type',
+          content: 'website',
+        },
+        {
+          property: 'og:site_name',
+          content: 'Boyhax Portfolio',
+        },
+        {
+          property: 'og:title',
+          content: title,
+        },
+        {
+          property: 'og:description',
+          content: description,
+        },
+        {
+          property: 'og:url',
+          content: canonicalUrl,
+        },
+        {
+          property: 'og:image',
+          content: imageUrl,
+        },
+        {
+          property: 'og:image:alt',
+          content: `${portfolio.name || 'Boyhax'} portfolio preview`,
+        },
+        {
+          property: 'og:locale',
+          content: 'en_US',
+        },
+        {
+          property: 'og:locale:alternate',
+          content: 'ar_OM',
+        },
+        {
+          name: 'twitter:card',
+          content: 'summary_large_image',
+        },
+        {
+          name: 'twitter:title',
+          content: title,
+        },
+        {
+          name: 'twitter:description',
+          content: description,
+        },
+        {
+          name: 'twitter:image',
+          content: imageUrl,
+        },
+        {
+          name: 'twitter:image:alt',
+          content: `${portfolio.name || 'Boyhax'} portfolio preview`,
+        },
+      ],
+      links: [
+        {
+          rel: 'canonical',
+          href: canonicalUrl,
+        },
+      ],
+    }
+  },
   component: App,
 })
 
 function App() {
-  const { portfolio, socialLinks, projects } = Route.useLoaderData()
+  const { portfolio, socialLinks, projects, blogPosts } = Route.useLoaderData()
   const [projectApi, setProjectApi] = useState<CarouselApi>()
   const [stackApi, setStackApi] = useState<CarouselApi>()
   const [isArabic, setIsArabic] = useState(false)
@@ -390,6 +526,13 @@ function App() {
                 <ArrowUpRight className="size-4" />
               </a>
             ))}
+            <Link
+              to="/blog"
+              className="inline-flex items-center gap-2 rounded-full border border-cyan-200/30 bg-cyan-200/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:bg-cyan-200/20"
+            >
+              {isArabic ? 'المدونة' : 'Blog'}
+              <ArrowUpRight className="size-4" />
+            </Link>
           </div>
         </div>
       </section>
@@ -473,6 +616,59 @@ function App() {
           </CarouselContent>
         </Carousel>
       </section>
+
+      {blogPosts.length > 0 ? (
+        <section
+          className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8"
+          aria-labelledby="blog-title"
+        >
+          <div className="mb-5 flex items-end justify-between gap-3">
+            <h2 id="blog-title" className="text-2xl font-bold sm:text-3xl">
+              {isArabic ? 'المدونة' : 'Blog'}
+            </h2>
+            <Link
+              to="/blog"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-cyan-100 transition hover:text-white"
+            >
+              {isArabic ? 'جميع المقالات' : 'View all'}
+              <ArrowUpRight className="size-4" />
+            </Link>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 landing-reveal-delay">
+            {blogPosts.map((post) => (
+              <Link
+                key={post.slug}
+                to="/blog/$slug"
+                params={{ slug: post.slug }}
+                className="group rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-200/30 hover:bg-white/8"
+              >
+                <time
+                  dateTime={post.publishedAt}
+                  className="text-xs font-medium text-cyan-100/90"
+                >
+                  {new Intl.DateTimeFormat(isArabic ? 'ar-OM' : 'en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    timeZone: 'Asia/Muscat',
+                  }).format(new Date(post.publishedAt))}
+                </time>
+                <h3 className="mt-2 text-lg font-bold text-slate-100 transition group-hover:text-cyan-100">
+                  {post.title}
+                </h3>
+                <p className="mt-2 line-clamp-2 text-sm text-slate-200/85">
+                  {post.summary}
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-cyan-100">
+                  {isArabic ? 'اقرأ المقال' : 'Read post'}
+                  <ArrowUpRight className="size-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 lg:px-8" aria-labelledby="stack-title">
         <div className="mb-5 flex items-end justify-between gap-3">

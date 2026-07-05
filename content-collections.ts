@@ -31,6 +31,26 @@ const education = defineCollection({
   }),
 })
 
+const posts = defineCollection({
+  name: 'posts',
+  directory: 'content/blog',
+  include: '**/*.md',
+  schema: z.object({
+    title: z.string(),
+    slug: z.string(),
+    description: z.string(),
+    summary: z.string(),
+    publishedAt: z.string(),
+    updatedAt: z.string().optional(),
+    author: z.string(),
+    lang: z.string().default('ar'),
+    tags: z.array(z.string()),
+    keywords: z.array(z.string()),
+    ogImage: z.string().optional(),
+    content: z.string(),
+  }),
+})
+
 export default defineConfig({
-  collections: [jobs, education],
+  collections: [jobs, education, posts],
 })

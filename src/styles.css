@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
 @plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -267,4 +268,8 @@ code {
   filter: drop-shadow(0 0 6px rgba(173, 216, 255, 0.65));
   opacity: 0;
   animation: sky-falling-star linear infinite;
+}
+
+.blog-prose {
+  @apply prose prose-invert max-w-none prose-headings:font-bold prose-headings:text-slate-100 prose-p:text-slate-200/90 prose-a:text-cyan-200 prose-a:no-underline hover:prose-a:text-white prose-strong:text-slate-100 prose-li:text-slate-200/90 prose-th:text-slate-100 prose-td:text-slate-200/90;
 }

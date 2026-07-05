@@ -6,11 +6,12 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev --port 3000",
+    "dev": "vite dev --port 3003",
     "start": "node .output/server/index.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "deploy":"bun x vercel --prod"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.2.2",

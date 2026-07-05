@@ -16,6 +16,11 @@ const config = defineConfig({
     contentCollections(),
     tailwindcss(),
     tanstackStart({
+      sitemap: {
+        enabled: true,
+        host: 'https://boyhax.com',
+        
+      },
       prerender: {
         enabled:true,
       }
