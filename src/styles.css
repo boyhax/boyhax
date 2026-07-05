@@ -5,6 +5,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   @apply m-0;
   font-family:
@@ -177,6 +181,111 @@ code {
   animation: landing-reveal 1s ease-out both;
 }
 
+@keyframes landing-zoom {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.landing-zoom {
+  animation: landing-zoom 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Scroll-triggered reveal system (class toggled by IntersectionObserver) */
+.reveal {
+  opacity: 0;
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-up {
+  transform: translateY(30px);
+}
+
+.reveal-left {
+  transform: translateX(-36px);
+}
+
+.reveal-right {
+  transform: translateX(36px);
+}
+
+.reveal-zoom {
+  transform: scale(0.92);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Staggered children inside a revealed block */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.55s ease-out,
+    transform 0.55s ease-out;
+  transition-delay: calc(var(--stagger-index, 0) * 75ms + 200ms);
+}
+
+.reveal.is-visible .stagger-item {
+  opacity: 1;
+  transform: none;
+}
+
+/* Animated underline for section headings */
+.section-heading {
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.section-heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 0;
+  width: 56px;
+  height: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(79, 184, 178, 0.95), rgba(56, 116, 203, 0.55));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.25s;
+}
+
+.reveal.is-visible .section-heading::after {
+  transform: scaleX(1);
+}
+
+/* Fixed scroll progress bar */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 50;
+  background: linear-gradient(90deg, rgba(79, 184, 178, 1), rgba(56, 116, 203, 0.9));
+  box-shadow: 0 0 12px rgba(79, 184, 178, 0.55);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
+/* Sky follows the cursor slightly */
+.sky-parallax {
+  transition: transform 0.35s ease-out;
+  will-change: transform;
+}
+
 @keyframes sky-shift {
   0% {
     transform: translate3d(0, 0, 0);
@@ -268,6 +377,86 @@ code {
   filter: drop-shadow(0 0 6px rgba(173, 216, 255, 0.65));
   opacity: 0;
   animation: sky-falling-star linear infinite;
+}
+
+@keyframes hero-ring-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px rgba(79, 184, 178, 0.25),
+      0 0 42px rgba(79, 184, 178, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 7px rgba(79, 184, 178, 0.18),
+      0 0 64px rgba(79, 184, 178, 0.5);
+  }
+}
+
+.hero-avatar-ring {
+  border-radius: 9999px;
+  padding: 5px;
+  background: linear-gradient(140deg, rgba(79, 184, 178, 0.9), rgba(56, 116, 203, 0.6), rgba(255, 255, 255, 0.25));
+  animation: hero-ring-pulse 5s ease-in-out infinite;
+}
+
+.hero-avatar-ring img {
+  display: block;
+  border: 3px solid rgba(4, 9, 20, 0.9);
+}
+
+@keyframes typing-caret-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.typing-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-inline-start: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: typing-caret-blink 1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .hero-avatar-ring,
+  .sky-falling-star,
+  .sky-gradient-layer,
+  .sky-clouds-layer,
+  .sky-stars-layer,
+  .landing-reveal,
+  .landing-reveal-delay,
+  .landing-zoom {
+    animation: none;
+  }
+
+  .reveal,
+  .stagger-item {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .section-heading::after {
+    transform: scaleX(1);
+    transition: none;
+  }
+
+  .sky-parallax {
+    transition: none;
+  }
 }
 
 .blog-prose {

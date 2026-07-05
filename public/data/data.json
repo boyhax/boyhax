@@ -16,10 +16,12 @@
 
     "primaryCta": {
       "label": "View Projects",
+      "label_ar": "عرض المشاريع",
       "href": "#projects"
     },
     "secondaryCta": {
       "label": "Download Resume",
+      "label_ar": "تحميل السيرة الذاتية",
       "href": "/assets/resume.pdf"
     }
   },
@@ -45,44 +47,62 @@
     {
       "title": "Manazl",
       "title_ar": "منازل",
+      "description": "Real estate platform for exploring and listing properties in Oman.",
+      "description_ar": "منصة عقارية لاستكشاف وعرض العقارات في عُمان.",
+      "tags": ["React", "Node.js", "PostgreSQL"],
       "image": "/Assets/Projects/manazl.png",
       "href": "https://manazl.omanapps.com"
     },
     {
       "title": "Kuzama",
       "title_ar": "خزامة",
+      "description": "Custom digital platform built for the Omani market.",
+      "description_ar": "منصة رقمية مخصصة مبنية للسوق العُماني.",
+      "tags": ["React", "Node.js", "Ionic"],
       "image": "/Assets/Projects/kuzama.png",
       "href": "https://kuzama.omanapps.com"
     },
     {
       "title": "Tajer",
       "title_ar": "تاجر",
+      "description": "Local supermarket brought online — browse and order with ease.",
+      "description_ar": "سوبرماركت محلي على الإنترنت — تصفح واطلب بسهولة.",
+      "tags": ["React", "Node.js", "PostgreSQL"],
       "image": "/Assets/Projects/tajer.png",
       "href": "https://tajer.tarmez.org"
     },
     {
       "title": "ProSync",
       "title_ar": "برو سينك",
+      "description": "Professional network and jobs platform for Oman.",
+      "description_ar": "شبكة مهنية ومنصة وظائف في عُمان.",
+      "tags": ["React", "Node.js", "PostgreSQL"],
       "image": "/Assets/Projects/prosync.png",
       "href": "https://prosync.omanapps.com"
     },
-    
     {
       "title": "Weyyak",
       "title_ar": "ويّاك",
+      "description": "B2B delivery platform — all courier companies in one app.",
+      "description_ar": "منصة توصيل B2B — كل شركات التوصيل في تطبيق واحد.",
+      "tags": ["React", "Node.js", "APIs"],
       "image": "/Assets/Projects/weyyak.png",
       "href": "https://weyyak.omanapps.com"
     },
     {
       "title": "OmanApps",
       "title_ar": "عمان آبس",
+      "description": "Digital studio building web and mobile experiences for businesses.",
+      "description_ar": "استوديو رقمي يبني تجارب ويب وموبايل للشركات.",
+      "tags": ["React", "Ionic", "Go"],
       "image": "/Assets/Projects/omanapps.png",
       "href": "https://omanapps.com"
     }
   ],
 
   "contact": {
-    "text": "If you have a product idea or need help shipping faster, feel free to reach out."
+    "text": "If you have a product idea or need help shipping faster, feel free to reach out.",
+    "text_ar": "إذا كانت لديك فكرة منتج أو تحتاج مساعدة في الإطلاق بشكل أسرع، لا تتردد في التواصل."
   },
   "social": [
     {

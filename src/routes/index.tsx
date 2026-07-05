@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import type { CarouselApi } from '#/components/ui/carousel'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -35,7 +36,22 @@ type DataJsonSocialItem = {
   icon?: string
 }
 
+type DataJsonCta = {
+  label?: string
+  label_ar?: string
+  href?: string
+}
+
+type CtaData = {
+  label: string
+  label_ar?: string
+  href: string
+}
+
 type DataJsonContent = {
+  site?: {
+    copyrightName?: string
+  }
   social?: DataJsonSocialItem[]
   hero?: {
     greeting?: string
@@ -47,6 +63,9 @@ type DataJsonContent = {
     avatar?: string
     hero?: string
     heroImage?: string
+    roles?: string[]
+    primaryCta?: DataJsonCta
+    secondaryCta?: DataJsonCta
   }
   about?: {
     description?: string
@@ -56,16 +75,26 @@ type DataJsonContent = {
   projects?: Array<{
     title?: string
     title_ar?: string
+    description?: string
+    description_ar?: string
+    tags?: string[]
     image?: string
     href?: string
     demo?: string
     repo?: string
   }>
+  contact?: {
+    text?: string
+    text_ar?: string
+  }
 }
 
 type ProjectData = {
   title: string
   title_ar?: string
+  description?: string
+  description_ar?: string
+  tags?: string[]
   image: string
   href: string
 }
@@ -157,6 +186,12 @@ type LandingLoaderData = {
   socialLinks: SocialLink[]
   projects: ProjectData[]
   blogPosts: BlogPostPreview[]
+  roles: string[]
+  primaryCta: CtaData | null
+  secondaryCta: CtaData | null
+  contactText: string
+  contactTextAr: string
+  copyrightName: string
 }
 
 const SITE_URL = 'https://boyhax.com'
@@ -182,6 +217,12 @@ const defaultLandingData: LandingLoaderData = {
   socialLinks: [],
   projects: [],
   blogPosts: [],
+  roles: [],
+  primaryCta: null,
+  secondaryCta: null,
+  contactText: '',
+  contactTextAr: '',
+  copyrightName: '',
 }
 
 function mapDataJson(
@@ -233,15 +274,35 @@ function mapDataJson(
         .map((item) => ({
           title: item.title || '',
           title_ar: item.title_ar,
+          description: item.description,
+          description_ar: item.description_ar,
+          tags: item.tags,
           image: normalizePublicAssetPath(item.image || ''),
           href: normalizeExternalUrl(item.href || item.demo || item.repo || ''),
         }))
     : []
 
+  const mapCta = (cta?: DataJsonCta): CtaData | null =>
+    cta?.label && cta.href
+      ? {
+          label: cta.label,
+          label_ar: cta.label_ar,
+          href: cta.href.startsWith('#')
+            ? cta.href
+            : normalizePublicAssetPath(normalizeExternalUrl(cta.href)),
+        }
+      : null
+
   return {
     portfolio,
     socialLinks,
     projects,
+    roles: Array.isArray(dataJson.hero?.roles) ? dataJson.hero.roles : [],
+    primaryCta: mapCta(dataJson.hero?.primaryCta),
+    secondaryCta: mapCta(dataJson.hero?.secondaryCta),
+    contactText: dataJson.contact?.text || '',
+    contactTextAr: dataJson.contact?.text_ar || dataJson.contact?.text || '',
+    copyrightName: dataJson.site?.copyrightName || '',
   }
 }
 
@@ -383,14 +444,188 @@ export const Route = createFileRoute('/')({
   component: App,
 })
 
+type RevealVariant = 'up' | 'left' | 'right' | 'zoom'
+
+function Reveal({
+  variant = 'up',
+  className = '',
+  children,
+}: {
+  variant?: RevealVariant
+  className?: string
+  children: ReactNode
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element || visible) return
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setVisible(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -48px 0px' },
+    )
+
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [visible])
+
+  return (
+    <div
+      ref={ref}
+      className={`reveal reveal-${variant} ${visible ? 'is-visible' : ''} ${className}`}
+    >
+      {children}
+    </div>
+  )
+}
+
+function ScrollProgressBar() {
+  const barRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    let frame = 0
+
+    const update = () => {
+      frame = 0
+      const bar = barRef.current
+      if (!bar) return
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      const progress = max > 0 ? window.scrollY / max : 0
+      bar.style.transform = `scaleX(${Math.min(1, Math.max(0, progress))})`
+    }
+
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update)
+    }
+
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [])
+
+  return <div ref={barRef} className="scroll-progress" aria-hidden="true" />
+}
+
+function useSkyParallax() {
+  const skyRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    let frame = 0
+    let x = 0
+    let y = 0
+
+    const update = () => {
+      frame = 0
+      const sky = skyRef.current
+      if (!sky) return
+      const layers = sky.querySelectorAll<HTMLElement>('.sky-parallax')
+      layers.forEach((layer, index) => {
+        const depth = (index + 1) * 7
+        layer.style.transform = `translate3d(${x * depth}px, ${y * depth}px, 0)`
+      })
+    }
+
+    const onMove = (event: MouseEvent) => {
+      x = (event.clientX / window.innerWidth - 0.5) * -1
+      y = (event.clientY / window.innerHeight - 0.5) * -1
+      if (!frame) frame = window.requestAnimationFrame(update)
+    }
+
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [])
+
+  return skyRef
+}
+
+function RolesTicker({ roles, isArabic }: { roles: string[]; isArabic: boolean }) {
+  const [roleIndex, setRoleIndex] = useState(0)
+  const [text, setText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    if (!roles.length) return
+
+    const current = roles[roleIndex % roles.length]
+
+    if (!deleting && text === current) {
+      const pause = window.setTimeout(() => setDeleting(true), 1600)
+      return () => window.clearTimeout(pause)
+    }
+
+    if (deleting && text === '') {
+      setDeleting(false)
+      setRoleIndex((i) => (i + 1) % roles.length)
+      return
+    }
+
+    const id = window.setTimeout(
+      () => {
+        setText(
+          deleting
+            ? current.slice(0, text.length - 1)
+            : current.slice(0, text.length + 1),
+        )
+      },
+      deleting ? 45 : 90,
+    )
+
+    return () => window.clearTimeout(id)
+  }, [roles, roleIndex, text, deleting])
+
+  if (!roles.length) return null
+
+  return (
+    <p className="mt-5 text-lg font-semibold text-cyan-200 sm:text-xl" dir="ltr">
+      <span className="text-slate-300/80">
+        {isArabic ? '> أبني بـ ' : '> I build with '}
+      </span>
+      <span>{text}</span>
+      <span className="typing-caret" aria-hidden="true" />
+    </p>
+  )
+}
+
 function App() {
-  const { portfolio, socialLinks, projects, blogPosts } = Route.useLoaderData()
+  const {
+    portfolio,
+    socialLinks,
+    projects,
+    blogPosts,
+    roles,
+    primaryCta,
+    secondaryCta,
+    contactText,
+    contactTextAr,
+    copyrightName,
+  } = Route.useLoaderData()
   const [projectApi, setProjectApi] = useState<CarouselApi>()
   const [stackApi, setStackApi] = useState<CarouselApi>()
   const [isArabic, setIsArabic] = useState(false)
   const [failedProjectImages, setFailedProjectImages] = useState<
     Record<string, boolean>
   >({})
+  const skyRef = useSkyParallax()
 
   useEffect(() => {
     setFailedProjectImages({})
@@ -449,6 +684,7 @@ function App() {
       dir={isArabic ? 'rtl' : 'ltr'}
       className="sky-background relative min-h-screen overflow-hidden text-slate-100"
     >
+      <ScrollProgressBar />
       <button
         type="button"
         onClick={toggleLanguage}
@@ -458,10 +694,10 @@ function App() {
         {isArabic ? 'EN' : 'AR'}
       </button>
 
-      <div className="pointer-events-none absolute inset-0 -z-10">
+      <div ref={skyRef} className="pointer-events-none absolute inset-0 -z-10">
         <div className="sky-gradient-layer" />
-        <div className="sky-clouds-layer" />
-        <div className="sky-stars-layer" />
+        <div className="sky-clouds-layer sky-parallax" />
+        <div className="sky-stars-layer sky-parallax" />
         <div className="sky-falling-stars-layer">
           {Array.from({ length: 10 }).map((_, index) => (
             <span
@@ -479,34 +715,59 @@ function App() {
       </div>
 
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-20 sm:px-6 lg:px-8">
-        <div className="rounded-3xl p-6 sm:p-10 landing-reveal">
-          <div>
-          <div className="mb-3 inline-flex items-center gap-2">
+        <div className="landing-reveal flex flex-col-reverse items-center gap-10 rounded-3xl p-6 sm:p-10 lg:flex-row lg:items-center lg:justify-between">
+          <div className="text-center lg:flex-1 lg:text-start">
             <p className="inline-flex rounded-full border border-cyan-200/40 bg-cyan-200/10 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-cyan-100">
               {isArabic ? portfolio.name_ar : portfolio.name}
             </p>
-            {portfolio.avatar_image ? (
+            <h1 className="mt-4 max-w-4xl text-4xl font-black leading-tight sm:text-6xl">
+              {isArabic ? portfolio.title_ar : portfolio.title}
+            </h1>
+            <p className="mt-4 max-w-2xl text-base text-slate-200/85 sm:text-lg">
+              {isArabic ? portfolio.intro_ar : portfolio.intro}
+            </p>
+
+            <RolesTicker roles={roles} isArabic={isArabic} />
+
+            <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
+              {primaryCta ? (
+                <a
+                  href={primaryCta.href}
+                  className="inline-flex items-center gap-2 rounded-full bg-cyan-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_0_24px_rgba(79,184,178,0.45)] transition hover:-translate-y-0.5 hover:bg-cyan-300"
+                >
+                  {isArabic ? primaryCta.label_ar || primaryCta.label : primaryCta.label}
+                </a>
+              ) : null}
+              {secondaryCta ? (
+                <a
+                  href={secondaryCta.href}
+                  download
+                  className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20"
+                >
+                  {isArabic
+                    ? secondaryCta.label_ar || secondaryCta.label
+                    : secondaryCta.label}
+                </a>
+              ) : null}
+            </div>
+          </div>
+
+          {portfolio.avatar_image ? (
+            <div className="hero-avatar-ring landing-zoom shrink-0">
               <img
                 src={portfolio.avatar_image}
                 alt={isArabic ? portfolio.name_ar : portfolio.name}
-                className="size-8 rounded-full border border-white/30 object-cover"
-                loading="lazy"
+                className="size-40 rounded-full object-cover sm:size-52 lg:size-64"
+                fetchPriority="high"
               />
-            ) : null}
-          </div>
-          <h1 className="max-w-4xl text-4xl font-black leading-tight sm:text-6xl">
-            {isArabic ? portfolio.title_ar : portfolio.title}
-          </h1>
-          <p className="mt-4 max-w-2xl text-base text-slate-200/85 sm:text-lg">
-            {isArabic ? portfolio.intro_ar : portfolio.intro}
-          </p>
-          </div>
+            </div>
+          ) : null}
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-14 sm:px-6 lg:px-8" aria-labelledby="about-title">
-        <div className="rounded-3xl p-6 sm:p-8 landing-reveal-delay">
-          <h2 id="about-title" className="text-2xl font-bold sm:text-3xl">
+        <Reveal variant="up" className="rounded-3xl p-6 sm:p-8">
+          <h2 id="about-title" className="section-heading text-2xl font-bold sm:text-3xl">
             {isArabic ? 'نبذة' : 'About'}
           </h2>
           <p className="mt-3 max-w-4xl text-slate-200/90">
@@ -514,13 +775,14 @@ function App() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            {socialLinks.map((link) => (
+            {socialLinks.map((link, index) => (
               <a
                 key={`${link.label}-${link.href}`}
                 href={link.href}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:bg-white/15"
+                style={{ '--stagger-index': index } as React.CSSProperties}
+                className="stagger-item inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:bg-white/15"
               >
                 {isArabic ? link.label_ar || link.label : link.label}
                 <ArrowUpRight className="size-4" />
@@ -528,18 +790,24 @@ function App() {
             ))}
             <Link
               to="/blog"
-              className="inline-flex items-center gap-2 rounded-full border border-cyan-200/30 bg-cyan-200/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:bg-cyan-200/20"
+              style={{ '--stagger-index': socialLinks.length } as React.CSSProperties}
+              className="stagger-item inline-flex items-center gap-2 rounded-full border border-cyan-200/30 bg-cyan-200/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:bg-cyan-200/20"
             >
               {isArabic ? 'المدونة' : 'Blog'}
               <ArrowUpRight className="size-4" />
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8" aria-labelledby="projects-title">
+      <section
+        id="projects"
+        className="mx-auto max-w-6xl scroll-mt-16 px-4 pb-16 sm:px-6 lg:px-8"
+        aria-labelledby="projects-title"
+      >
+        <Reveal variant={isArabic ? 'right' : 'left'}>
         <div className="mb-5 flex items-end justify-between gap-3">
-          <h2 id="projects-title" className="text-2xl font-bold sm:text-3xl">
+          <h2 id="projects-title" className="section-heading text-2xl font-bold sm:text-3xl">
             {isArabic ? 'المشاريع' : 'Projects'}
           </h2>
           <div className="flex items-center gap-2">
@@ -567,7 +835,6 @@ function App() {
         <Carousel
           setApi={setProjectApi}
           opts={{ align: 'start', loop: true, direction: isArabic ? 'rtl' : 'ltr' }}
-          className="landing-reveal"
         >
           <CarouselContent>
             {projects.map((project) => (
@@ -584,7 +851,7 @@ function App() {
                   href={project.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="group block overflow-hidden rounded-2xl"
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition hover:border-cyan-200/40 hover:bg-white/10"
                 >
                   {!hasImageError ? (
                     <div className="relative h-52 overflow-hidden sm:h-56">
@@ -600,13 +867,40 @@ function App() {
                           }))
                         }}
                       />
+                      <div className="absolute inset-0 flex items-end justify-end bg-linear-to-t from-slate-950/80 via-transparent to-transparent p-3 opacity-0 transition duration-300 group-hover:opacity-100">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-cyan-400 px-3 py-1 text-xs font-bold text-slate-950">
+                          {isArabic ? 'زيارة الموقع' : 'Visit site'}
+                          <ArrowUpRight className="size-3.5" />
+                        </span>
+                      </div>
                     </div>
                   ) : null}
-                  <div className="flex items-center justify-between gap-2 p-4">
-                    <p className="text-base font-semibold text-slate-100">
-                      {isArabic ? project.title_ar || project.title : project.title}
-                    </p>
-                    <ArrowUpRight className="size-4 text-cyan-200" />
+                  <div className="flex flex-1 flex-col gap-2 p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-base font-semibold text-slate-100">
+                        {isArabic ? project.title_ar || project.title : project.title}
+                      </p>
+                      <ArrowUpRight className="size-4 text-cyan-200" />
+                    </div>
+                    {project.description ? (
+                      <p className="text-sm text-slate-200/80">
+                        {isArabic
+                          ? project.description_ar || project.description
+                          : project.description}
+                      </p>
+                    ) : null}
+                    {project.tags?.length ? (
+                      <div className="mt-auto flex flex-wrap gap-1.5 pt-2" dir="ltr">
+                        {project.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-cyan-100/90"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </a>
               </CarouselItem>
@@ -615,6 +909,7 @@ function App() {
             ))}
           </CarouselContent>
         </Carousel>
+        </Reveal>
       </section>
 
       {blogPosts.length > 0 ? (
@@ -622,8 +917,9 @@ function App() {
           className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8"
           aria-labelledby="blog-title"
         >
+          <Reveal variant="up">
           <div className="mb-5 flex items-end justify-between gap-3">
-            <h2 id="blog-title" className="text-2xl font-bold sm:text-3xl">
+            <h2 id="blog-title" className="section-heading text-2xl font-bold sm:text-3xl">
               {isArabic ? 'المدونة' : 'Blog'}
             </h2>
             <Link
@@ -635,13 +931,14 @@ function App() {
             </Link>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 landing-reveal-delay">
-            {blogPosts.map((post) => (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {blogPosts.map((post, index) => (
               <Link
                 key={post.slug}
                 to="/blog/$slug"
                 params={{ slug: post.slug }}
-                className="group rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-200/30 hover:bg-white/8"
+                style={{ '--stagger-index': index } as React.CSSProperties}
+                className="stagger-item group rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-200/30 hover:bg-white/8"
               >
                 <time
                   dateTime={post.publishedAt}
@@ -667,12 +964,14 @@ function App() {
               </Link>
             ))}
           </div>
+          </Reveal>
         </section>
       ) : null}
 
-      <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 lg:px-8" aria-labelledby="stack-title">
+      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8" aria-labelledby="stack-title">
+        <Reveal variant={isArabic ? 'left' : 'right'}>
         <div className="mb-5 flex items-end justify-between gap-3">
-          <h2 id="stack-title" className="text-2xl font-bold sm:text-3xl">
+          <h2 id="stack-title" className="section-heading text-2xl font-bold sm:text-3xl">
             {isArabic ? 'التقنيات' : 'Tech Stack'}
           </h2>
           <div className="flex items-center gap-2">
@@ -700,7 +999,6 @@ function App() {
         <Carousel
           setApi={setStackApi}
           opts={{ align: 'start', loop: true, direction: isArabic ? 'rtl' : 'ltr' }}
-          className="landing-reveal-delay"
         >
           <CarouselContent>
             {techStack.map((tech) => (
@@ -728,7 +1026,62 @@ function App() {
             ))}
           </CarouselContent>
         </Carousel>
+        </Reveal>
       </section>
+
+      <section
+        id="contact"
+        className="mx-auto max-w-6xl scroll-mt-16 px-4 pb-20 sm:px-6 lg:px-8"
+        aria-labelledby="contact-title"
+      >
+        <Reveal
+          variant="zoom"
+          className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center sm:p-12"
+        >
+          <h2 id="contact-title" className="text-2xl font-bold sm:text-4xl">
+            {isArabic ? 'لنبنِ شيئاً معاً' : "Let's build something together"}
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-200/85 sm:text-lg">
+            {isArabic ? contactTextAr : contactText}
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <a
+              href="https://omanapps.com"
+              target="_blank"
+              rel="noreferrer"
+              style={{ '--stagger-index': 0 } as React.CSSProperties}
+              className="stagger-item inline-flex items-center gap-2 rounded-full bg-cyan-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_0_24px_rgba(79,184,178,0.45)] transition hover:-translate-y-0.5 hover:bg-cyan-300"
+            >
+              {isArabic ? 'ابدأ مشروعك' : 'Start a project'}
+              <ArrowUpRight className="size-4" />
+            </a>
+            {socialLinks.map((link, index) => (
+              <a
+                key={`contact-${link.label}-${link.href}`}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                style={{ '--stagger-index': index + 1 } as React.CSSProperties}
+                className="stagger-item inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:bg-white/15"
+              >
+                {isArabic ? link.label_ar || link.label : link.label}
+              </a>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      <footer className="border-t border-white/10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-slate-300/80 sm:flex-row sm:px-6 lg:px-8">
+          <p>
+            © {new Date().getFullYear()}{' '}
+            {isArabic ? portfolio.name_ar : copyrightName || portfolio.name}
+          </p>
+          <p dir="ltr" className="font-semibold tracking-widest text-cyan-100/80">
+            boyhax.com
+          </p>
+        </div>
+      </footer>
     </main>
   )
 }
