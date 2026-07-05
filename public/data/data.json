@@ -1,0 +1,113 @@
+{
+  "site": {
+    "copyrightName": "Said Alhajri",
+    "repo": "https://github.com/boyhax/Portfolio"
+  },
+  "hero": {
+    "greeting": "Full Stack Developer From Oman",
+    "greeting_ar": "مطور تطبيقات ومواقع ويب",
+    "name": "Said Alhajri",
+    "name_ar": "سعيد الحجري",
+    "intro": "I build fully custom web and mobile products with a focus on performance, clean UX, and maintainable systems.",
+    "intro_ar": "أبني منتجات ويب وموبايل مخصصة بالكامل مع تركيز على الأداء وتجربة مستخدم نظيفة وأنظمة قابلة للصيانة.",
+    "avatar": "/Assets/avatar.JPG",
+    "hero": "/Assets/hero.png",
+    "roles": ["JavaScript", "Go", "Node.js", "React", "Ionic", "PostgreSQL"],
+
+    "primaryCta": {
+      "label": "View Projects",
+      "href": "#projects"
+    },
+    "secondaryCta": {
+      "label": "Download Resume",
+      "href": "/assets/resume.pdf"
+    }
+  },
+  "about": {
+    "title": "About Me",
+    "title_ar": "نبذة عني",
+    "description": "I programming since 2015 in gaming and web/mobile apps , i build full custom backends using js/ts eco system.",
+    "description_ar": "أنا مبرمج منذ عام 2015 في مجال الألعاب وتطبيقات الويب والموبايل، أبني أنظمة  مخصصة بالكامل باستخدام نظام جافا سكريبت/تايب سكريبت.",
+    "image": "/assets/about.png"
+  },
+  "skills": [
+    "React",
+    "Vite",
+    "Ionic",
+    "Node.js",
+    "Go",
+    "PostgreSQL",
+    "Supabase",
+    "Firebase",
+    "Capacitor"
+  ],
+  "projects": [
+    {
+      "title": "Manazl",
+      "title_ar": "منازل",
+      "image": "/Assets/Projects/manazl.png",
+      "href": "https://manazl.omanapps.com"
+    },
+    {
+      "title": "Kuzama",
+      "title_ar": "خزامة",
+      "image": "/Assets/Projects/kuzama.png",
+      "href": "https://kuzama.omanapps.com"
+    },
+    {
+      "title": "Tajer",
+      "title_ar": "تاجر",
+      "image": "/Assets/Projects/tajer.png",
+      "href": "https://tajer.tarmez.org"
+    },
+    {
+      "title": "ProSync",
+      "title_ar": "برو سينك",
+      "image": "/Assets/Projects/prosync.png",
+      "href": "https://prosync.omanapps.com"
+    },
+    
+    {
+      "title": "Weyyak",
+      "title_ar": "ويّاك",
+      "image": "/Assets/Projects/weyyak.png",
+      "href": "https://weyyak.omanapps.com"
+    },
+    {
+      "title": "OmanApps",
+      "title_ar": "عمان آبس",
+      "image": "/Assets/Projects/omanapps.png",
+      "href": "https://omanapps.com"
+    }
+  ],
+
+  "contact": {
+    "text": "If you have a product idea or need help shipping faster, feel free to reach out."
+  },
+  "social": [
+    {
+      "label": "GitHub",
+      "label_ar": "جيت هاب",
+      "url": "https://github.com/boyhax",
+      "icon": "github"
+    },
+    {
+      "label": "LinkedIn",
+      "label_ar": "لينكدإن",
+      "url": "https://www.linkedin.com/in/saeed-mubarak-alhajri",
+      "icon": "linkedin"
+    },
+    {
+      "label": "Twitter",
+      "label_ar": "تويتر",
+      "url": "https://twitter.com/boyhaxdev",
+      "icon": "twitter"
+    },
+    {
+      "label": "Instagram",
+      "label_ar": "انستغرام",
+      "url": "https://www.instagram.com/boyhaxdev",
+      "icon": "instagram"
+    }
+  ]
+}
