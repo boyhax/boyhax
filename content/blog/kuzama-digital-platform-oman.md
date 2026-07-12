@@ -48,7 +48,7 @@ ogImage: /Assets/Projects/kuzama.png
 
 ## جرّب المنصة
 
-يمكنك زيارة [kuzama.omanapps.com](https://kuzama.omanapps.com) لاستكشاف المنتج 
+يمكنك زيارة [kuzama.omanapps.com](https://kuzama.omanapps.com)  هنا لاستكشاف المنتج 
 
 ---
 
