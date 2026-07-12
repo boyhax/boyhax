@@ -889,18 +889,6 @@ function App() {
                           : project.description}
                       </p>
                     ) : null}
-                    {project.tags?.length ? (
-                      <div className="mt-auto flex flex-wrap gap-1.5 pt-2" dir="ltr">
-                        {project.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-cyan-100/90"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
                   </div>
                 </a>
               </CarouselItem>
